@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BioIQ — Disease Research Intelligence</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* ── Palette: 6 structural neutrals + one accent ──────────────── */
+      --ink:      #0B0F14;   /* page canvas            */
+      --panel:    #131920;   /* raised surface         */
+      --panel-2:  #0F151C;   /* recessed well (input)  */
+      --line:     #232B35;   /* hairlines / borders    */
+      --line-2:   #2E3844;   /* stronger hairline      */
+      --text:     #E8EDF2;   /* primary text           */
+      --muted:    #7C8A99;   /* secondary / metadata   */
+      --dim:      #5B6672;   /* tertiary / queued      */
+      --signal:   #4FD1C5;   /* THE accent — live/verified data only */
+      --signal-dim: rgba(79, 209, 197, 0.12);
+      --danger:   #E06B6B;   /* functional error only  */
+      --danger-dim: rgba(224, 107, 107, 0.09);
+
+      --font-mono:  "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+      --font-sans:  "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Helvetica, sans-serif;
+      --font-serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+
+      --radius:    10px;
+      --radius-sm: 7px;
+      --overlay:   0 14px 34px rgba(0, 0, 0, 0.55);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--ink);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100dvh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--signal);
+      outline-offset: 2px;
+      border-radius: 3px;
+    }
+
+    /* ═══════════════════════════════ HEADER ═══════════════════════════════ */
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(11, 15, 20, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .header-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+
+    .logo-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--signal);
+      flex-shrink: 0;
+    }
+    .logo-mark svg { width: 17px; height: 17px; }
+
+    .logo-text h1 {
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      line-height: 1.1;
+    }
+
+    .logo-text .tagline {
+      font-size: 0.6rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--dim);
+      transition: background 0.3s;
+    }
+    .status-dot.online { background: var(--signal); }
+
+    .status-label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.01em;
+    }
+
+    /* ═══════════════════════════════ MAIN ═════════════════════════════════ */
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3.25rem 2rem 5rem;
+    }
+
+    /* ═══════════════════════════════ HERO ═════════════════════════════════ */
+
+    .hero { margin-bottom: 2rem; }
+
+    .hero h2 {
+      font-family: var(--font-mono);
+      font-size: 1.7rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      line-height: 1.28;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+      max-width: 22ch;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      max-width: 62ch;
+      line-height: 1.65;
+    }
+
+    /* ═══════════════════════════════ SEARCH CARD ══════════════════════════ */
+
+    .search-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 1.35rem;
+      margin-bottom: 2.75rem;
+    }
+
+    .input-wrap { position: relative; width: 100%; }
+
+    .input-glyph {
+      position: absolute;
+      left: 0.95rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--dim);
+      font-family: var(--font-mono);
+      font-size: 1.05rem;
+      pointer-events: none;
+    }
+
+    #disease-input {
+      width: 100%;
+      height: 54px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 0 1rem 0 2.15rem;
+      color: var(--text);
+      font-size: 1rem;
+      font-family: var(--font-mono);
+      letter-spacing: 0.01em;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    #disease-input::placeholder { color: var(--dim); }
+    #disease-input:focus { border-color: var(--signal); }
+
+    /* autocomplete dropdown */
+    #suggestions {
+      display: none;
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0; right: 0;
+      background: var(--panel);
+      border: 1px solid var(--line-2);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      z-index: 200;
+      box-shadow: var(--overlay);
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    #suggestions.open { display: block; }
+
+    .suggestion-item {
+      padding: 0.68rem 1rem 0.68rem 2.15rem;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--muted);
+      border-bottom: 1px solid var(--line);
+      transition: background 0.12s, color 0.12s;
+      position: relative;
+    }
+    .suggestion-item::before {
+      content: "›";
+      position: absolute;
+      left: 1rem;
+      color: var(--dim);
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover,
+    .suggestion-item.active {
+      background: var(--panel-2);
+      color: var(--text);
+    }
+    .suggestion-item:hover::before,
+    .suggestion-item.active::before { color: var(--signal); }
+
+    /* segmented view selector (three lenses on one disease) */
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      width: 100%;
+      margin-top: 1rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .seg {
+      appearance: none;
+      background: transparent;
+      color: var(--muted);
+      border: none;
+      border-right: 1px solid var(--line);
+      height: 46px;
+      padding: 0 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: background 0.15s, color 0.15s;
+    }
+    .seg:last-child { border-right: none; }
+    .seg:hover:not(:disabled),
+    .seg.is-active { color: var(--text); background: var(--panel-2); }
+    .seg.is-active { box-shadow: inset 0 -2px 0 var(--signal); }
+    .seg:disabled { opacity: 0.42; cursor: not-allowed; }
+
+    /* hint + source row */
+    .meta-row {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .search-hint {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--dim);
+    }
+    .hint-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--dim);
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .hint-dot.ready { background: var(--signal); }
+
+    .source-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+    .chip {
+      font-family: var(--font-mono);
+      font-size: 0.64rem;
+      color: var(--muted);
+      padding: 0.2rem 0.5rem;
+      border-radius: 5px;
+      letter-spacing: 0.02em;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+    }
+
+    /* ═══════════════════════════════ SECTIONS ═════════════════════════════ */
+
+    #sections { display: flex; flex-direction: column; gap: 2rem; }
+
+    .section { animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.9rem;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+
+    .result-label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+    .result-label::before {
+      content: "";
+      width: 6px; height: 6px;
+      border-radius: 1px;
+      background: var(--line-2);
+    }
+
+    .result-meta { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+    .meta-pill {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-variant-numeric: tabular-nums;
+      padding: 0.2rem 0.55rem;
+      border-radius: 5px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    /* content card (shared by all three section types) */
+    .brief-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 2.5rem 2.75rem;
+      line-height: 1.75;
+    }
+
+    /* ── Markdown typography ───────────────────────────────── */
+    .brief-card h1 {
+      font-family: var(--font-mono);
+      font-size: 1.4rem;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      line-height: 1.3;
+      margin-bottom: 0.4rem;
+    }
+    .brief-card h2 {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.11em;
+      color: var(--muted);
+      margin-top: 2.25rem;
+      margin-bottom: 0.85rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .brief-card > h2:first-child,
+    .brief-card > h1:first-child { margin-top: 0; }
+    .brief-card h3 {
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-top: 1.6rem;
+      margin-bottom: 0.5rem;
+    }
+    .brief-card h4 {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-top: 1.2rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .brief-card p {
+      font-family: var(--font-serif);
+      color: #cdd6e2;
+      font-size: 1rem;
+      margin-bottom: 0.9rem;
+    }
+    .brief-card ul,
+    .brief-card ol {
+      font-family: var(--font-serif);
+      color: #cdd6e2;
+      font-size: 1rem;
+      margin: 0.5rem 0 1rem 1.5rem;
+    }
+    .brief-card li { margin-bottom: 0.4rem; }
+    .brief-card li::marker { color: var(--dim); }
+
+    .brief-card strong { color: var(--text); font-weight: 600; }
+    .brief-card em { color: var(--muted); font-style: italic; }
+
+    .brief-card hr {
+      border: none;
+      border-top: 1px solid var(--line);
+      margin: 1.5rem 0;
+    }
+
+    .brief-card code {
+      background: var(--panel-2);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      font-variant-numeric: tabular-nums;
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+    }
+
+    .brief-card blockquote {
+      border-left: 2px solid var(--line-2);
+      padding-left: 1rem;
+      margin: 0.9rem 0;
+      color: var(--muted);
+      font-family: var(--font-serif);
+      font-style: italic;
+    }
+
+    .brief-card a { color: var(--signal); text-decoration: underline; text-underline-offset: 2px; }
+
+    /* ── Source citations: inline, unboxed — reads like a reference, not a chip ── */
+    .cite-badge {
+      font-family: var(--font-mono);
+      font-size: 0.8em;
+      letter-spacing: 0.01em;
+      color: var(--muted);
+      white-space: nowrap;
+      cursor: default;
+      transition: color 0.12s;
+    }
+    .cite-badge::before { content: "["; }
+    .cite-badge::after  { content: "]"; }
+    .cite-badge:hover { color: var(--text); }
+
+    /* ── "Newly added to BioIQ" badge (on-demand ingestion — a live event) ── */
+    .new-badge {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.02em;
+      color: var(--signal);
+      background: var(--signal-dim);
+      border: 1px solid rgba(79, 209, 197, 0.35);
+      border-radius: 5px;
+      vertical-align: middle;
+    }
+
+    /* ── Pipeline trace (loading state + provenance signature) ─────── */
+    .section-loading {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 1.5rem 1.6rem;
+    }
+
+    .trace-head {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      margin-bottom: 1.1rem;
+      padding-bottom: 0.9rem;
+      border-bottom: 1px dashed var(--line);
+      flex-wrap: wrap;
+    }
+    .trace-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.64rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--dim);
+    }
+    .trace-caption {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+
+    .trace-list { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
+
+    .trace-stage {
+      display: grid;
+      grid-template-columns: 16px minmax(0, 150px) 1fr;
+      align-items: center;
+      gap: 0.7rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .trace-src  { color: var(--muted); }
+    .trace-note { color: var(--dim); font-size: 0.72rem; }
+    .trace-stage.is-done  .trace-src,
+    .trace-stage.is-active .trace-src { color: var(--text); }
+    .trace-stage.is-active .trace-note { color: var(--signal); }
+    .trace-stage.is-queued { opacity: 0.5; }
+
+    .trace-mark { width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; }
+    .mark-ring {
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      border: 1.5px solid var(--line-2);
+    }
+    .mark-check { width: 15px; height: 15px; }
+    .mark-check path {
+      fill: none;
+      stroke: var(--signal);
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .mark-spin {
+      width: 13px; height: 13px;
+      border-radius: 50%;
+      border: 1.6px solid var(--line-2);
+      border-top-color: var(--signal);
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Per-section error card ────────────────────────────── */
+    .section-error {
+      background: var(--danger-dim);
+      border: 1px solid rgba(224, 107, 107, 0.28);
+      border-radius: var(--radius);
+      padding: 1.35rem 1.55rem;
+      display: flex;
+      gap: 0.9rem;
+      align-items: flex-start;
+    }
+    .error-icon { color: var(--danger); flex-shrink: 0; line-height: 1; }
+    .error-icon svg { width: 20px; height: 20px; display: block; }
+    .error-title {
+      font-family: var(--font-mono);
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: var(--danger);
+      margin-bottom: 0.3rem;
+    }
+    .section-error-msg {
+      font-size: 0.86rem;
+      color: #d8a3a3;
+      line-height: 1.55;
+      white-space: pre-line;
+    }
+
+    /* ── "Add the other views" footer ──────────────────────── */
+    .section-footer {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+    }
+    .footer-add-label {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+    .add-btn {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      padding: 0.45rem 0.8rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .add-btn:hover:not(:disabled) { color: var(--text); border-color: var(--line-2); background: var(--panel); }
+    .add-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ═══════════════════════════════ RESPONSIVE ═══════════════════════════ */
+    @media (max-width: 620px) {
+      main { padding: 2rem 1rem 3rem; }
+      .header-inner { padding: 0 1rem; }
+      .brief-card { padding: 1.6rem 1.35rem; }
+      .hero h2 { font-size: 1.35rem; }
+      .segmented { grid-template-columns: 1fr; }
+      .seg { border-right: none; border-bottom: 1px solid var(--line); }
+      .seg:last-child { border-bottom: none; }
+      .seg.is-active { box-shadow: inset 2px 0 0 var(--signal); }
+      .meta-row { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .section { animation: none; }
+      .mark-spin { animation: none; border-top-color: var(--signal); border-right-color: var(--signal); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ HEADER ══════════════════════════════ -->
+<header>
+  <div class="header-inner">
+    <div class="logo-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M8 3c0 4 8 6 8 9s-8 5-8 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M16 3c0 4-8 6-8 9s8 5 8 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M9.2 6.5h5.6M8.4 12h7.2M9.2 17.5h5.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <h1>bioiq</h1>
+      <div class="tagline">Disease Research Intelligence</div>
+    </div>
+    <div class="header-right">
+      <div class="status-dot" id="status-dot"></div>
+      <span class="status-label" id="status-label">connecting…</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════ MAIN ════════════════════════════════ -->
+<main>
+
+  <!-- Hero -->
+  <div class="hero">
+    <h2>Synthesized disease intelligence, cited to source.</h2>
+    <p>Enter a disease, gene, or MIM number. BioIQ composes mechanism, genetics, pathways, drug-repurposing candidates, and active trials into one cited brief — then adds hypotheses and cross-disease connections without re-typing.</p>
+  </div>
+
+  <!-- Search -->
+  <div class="search-card">
+    <div class="input-wrap">
+      <span class="input-glyph" aria-hidden="true">›</span>
+      <input
+        id="disease-input"
+        type="text"
+        placeholder="Marfan syndrome · FBN1 · 154700"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="Disease name, gene, or MIM number"
+        aria-autocomplete="list"
+      />
+      <div id="suggestions" role="listbox" aria-label="Disease suggestions"></div>
+    </div>
+
+    <div class="segmented" role="group" aria-label="Choose a view">
+      <button id="btn-brief"      class="seg brief"      aria-pressed="false" onclick="requestSection('brief')">Research Brief</button>
+      <button id="btn-hypotheses" class="seg hypotheses" aria-pressed="false" onclick="requestSection('hypotheses')">Hypotheses</button>
+      <button id="btn-patterns"   class="seg patterns"   aria-pressed="false" onclick="requestSection('patterns')">Cross-Disease</button>
+    </div>
+
+    <div class="meta-row">
+      <div class="search-hint">
+        <span class="hint-dot" id="hint-dot"></span>
+        <span id="hint-text">loading available diseases…</span>
+      </div>
+      <div class="source-chips">
+        <span class="chip">OMIM</span>
+        <span class="chip">ClinVar</span>
+        <span class="chip">Orphanet</span>
+        <span class="chip">ChEMBL</span>
+        <span class="chip">Reactome</span>
+        <span class="chip">ClinicalTrials.gov</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dynamically-created result sections stack here, in request order -->
+  <div id="sections"></div>
+
+</main>
+
+<script>
+  // ─── Configuration ────────────────────────────────────────────────────────
+  const API_BASE = 'http://localhost:8000';
+
+  // Per-view metadata: label + short subject used in the pipeline caption.
+  const TYPES = {
+    brief:      { label: 'Research Brief',            subject: 'research brief' },
+    hypotheses: { label: 'Hypotheses',                subject: 'therapeutic hypotheses' },
+    patterns:   { label: 'Cross-Disease Connections', subject: 'cross-disease connections' },
+  };
+
+  // The real ingestion → synthesis pipeline. Each stage is a source + what it
+  // returns; the trace advances through the six databases, then holds on the
+  // synthesis stage (the long-running step) until the response arrives.
+  const PIPELINE = [
+    ['OMIM',               'clinical synopsis'],
+    ['ClinVar',            'variant classifications'],
+    ['Orphanet',           'disease registry'],
+    ['ChEMBL',             'drug–target activity'],
+    ['Reactome',           'pathway involvement'],
+    ['ClinicalTrials.gov', 'active trials'],
+    ['Synthesis',          'composing cited output'],
+  ];
+
+  // ─── State ───────────────────────────────────────────────────────────────
+  let diseases = [];
+  let activeSuggestion = -1;
+  const sectionEls = {};   // type -> section DOM element (also = "which views exist")
+
+  const CITE_SOURCES = ['ClinicalTrials', 'ClinVar', 'Orphanet', 'Reactome', 'ChEMBL', 'OMIM'];
+
+  // ─── DOM refs ─────────────────────────────────────────────────────────────
+  const inputEl       = document.getElementById('disease-input');
+  const suggestionsEl = document.getElementById('suggestions');
+  const sectionsEl    = document.getElementById('sections');
+  const statusDot     = document.getElementById('status-dot');
+  const statusLabel   = document.getElementById('status-label');
+  const hintDot       = document.getElementById('hint-dot');
+  const hintText      = document.getElementById('hint-text');
+
+  marked.setOptions({ gfm: true, breaks: false });
+
+  // ─── API health + disease loading ─────────────────────────────────────────
+  async function loadDiseases() {
+    try {
+      const res = await fetch(`${API_BASE}/diseases`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      diseases = data.diseases;
+
+      statusDot.classList.add('online');
+      statusLabel.textContent = 'api online';
+      hintDot.classList.add('ready');
+      hintText.textContent = `${diseases.length} diseases in knowledge graph`;
+    } catch {
+      statusLabel.textContent = 'api offline';
+      hintText.textContent = 'cannot reach API — start the server on port 8000';
+    }
+  }
+
+  // ─── Autocomplete ─────────────────────────────────────────────────────────
+  inputEl.addEventListener('input', () => {
+    const q = inputEl.value.trim().toLowerCase();
+    if (!q) { closeSuggestions(); return; }
+    const matches = diseases.filter(d => d.toLowerCase().includes(q));
+    renderSuggestions(matches);
+  });
+
+  inputEl.addEventListener('keydown', (e) => {
+    const items = suggestionsEl.querySelectorAll('.suggestion-item');
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeSuggestion = Math.min(activeSuggestion + 1, items.length - 1);
+      highlightSuggestion(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeSuggestion = Math.max(activeSuggestion - 1, -1);
+      highlightSuggestion(items);
+    } else if (e.key === 'Enter') {
+      if (activeSuggestion >= 0 && items[activeSuggestion]) {
+        pickSuggestion(items[activeSuggestion].dataset.value);
+      } else {
+        // Enter with no highlighted suggestion = the primary action.
+        requestSection('brief');
+      }
+    } else if (e.key === 'Escape') {
+      closeSuggestions();
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.input-wrap')) closeSuggestions();
+  });
+
+  function renderSuggestions(matches) {
+    activeSuggestion = -1;
+    if (!matches.length) { closeSuggestions(); return; }
+    suggestionsEl.innerHTML = matches
+      .map(d => `<div class="suggestion-item" role="option" data-value="${d}">${d}</div>`)
+      .join('');
+    suggestionsEl.querySelectorAll('.suggestion-item').forEach(el => {
+      el.addEventListener('click', () => pickSuggestion(el.dataset.value));
+    });
+    suggestionsEl.classList.add('open');
+  }
+
+  function highlightSuggestion(items) {
+    items.forEach((el, i) => el.classList.toggle('active', i === activeSuggestion));
+    if (activeSuggestion >= 0) items[activeSuggestion].scrollIntoView({ block: 'nearest' });
+  }
+
+  function pickSuggestion(value) {
+    inputEl.value = value;
+    closeSuggestions();
+    inputEl.focus();
+  }
+
+  function closeSuggestions() {
+    suggestionsEl.classList.remove('open');
+    suggestionsEl.innerHTML = '';
+    activeSuggestion = -1;
+  }
+
+  // ─── Citation badge post-processing ───────────────────────────────────────
+  // Turns [OMIM], [ClinVar], etc. into monochrome badge spans inside rendered HTML.
+  function applyBadges(html) {
+    return html.replace(/\[([A-Za-z]+)\]/g, (match, src) =>
+      CITE_SOURCES.includes(src)
+        ? `<span class="cite-badge cite-${src}" title="${src} database">${src}</span>`
+        : match
+    );
+  }
+
+  // Frontend-only: hide the synthesis engine's "Prepared by:" byline from the
+  // rendered header. Does not modify the stored brief data.
+  function stripByline(text) {
+    return String(text ?? '').replace(/\s*\*?\s*Prepared by:[^*\n]*\*?/gi, '');
+  }
+
+  function md(text) {
+    return applyBadges(marked.parse(stripByline(text)));
+  }
+
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  }
+
+  // ─── Section lifecycle ────────────────────────────────────────────────────
+
+  // Entry point wired to every button. Creates the section if new (appended at
+  // the bottom, so sections stack in the order requested), then runs the fetch.
+  function requestSection(type) {
+    const name = inputEl.value.trim();
+    if (!name) {
+      inputEl.focus();
+      hintText.textContent = 'type or pick a disease first';
+      return;
+    }
+    closeSuggestions();
+    markActiveMode(type);
+
+    let el = sectionEls[type];
+    if (!el) {
+      el = createSection(type);
+      sectionsEl.appendChild(el);
+      sectionEls[type] = el;
+      refreshFooters();
+    }
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    runSection(type, name);
+  }
+
+  // Reflect the current view on the segmented control.
+  function markActiveMode(type) {
+    ['brief', 'hypotheses', 'patterns'].forEach(t => {
+      const b = document.getElementById(`btn-${t}`);
+      if (!b) return;
+      b.classList.toggle('is-active', t === type);
+      b.setAttribute('aria-pressed', String(t === type));
+    });
+  }
+
+  function createSection(type) {
+    const el = document.createElement('div');
+    el.className = 'section';
+    el.dataset.type = type;
+    el.innerHTML = `
+      <div class="result-header">
+        <span class="result-label ${type}">${TYPES[type].label}</span>
+        <div class="result-meta"></div>
+      </div>
+      <div class="section-body"></div>
+      <div class="section-footer"></div>`;
+    return el;
+  }
+
+  // ─── Pipeline trace (loading state) ───────────────────────────────────────
+
+  function stageMark(state) {
+    if (state === 'done')   return `<svg class="mark-check" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.4 8.4l3 3 6.2-7"/></svg>`;
+    if (state === 'active') return `<span class="mark-spin" aria-hidden="true"></span>`;
+    return `<span class="mark-ring" aria-hidden="true"></span>`;
+  }
+
+  function renderStage(li, state) {
+    li.className = `trace-stage is-${state}`;
+    li.querySelector('.trace-mark').innerHTML = stageMark(state);
+    li.querySelector('.trace-note').textContent = state === 'queued' ? 'queued' : li.dataset.desc;
+    if (state === 'active') li.setAttribute('aria-current', 'step');
+    else li.removeAttribute('aria-current');
+  }
+
+  function setLoading(el, type) {
+    stopTrace(el);
+    const rows = PIPELINE.map(([src, desc], i) =>
+      `<li class="trace-stage is-queued" data-i="${i}" data-desc="${desc}">
+         <span class="trace-mark">${stageMark('queued')}</span>
+         <span class="trace-src">${src}</span>
+         <span class="trace-note">queued</span>
+       </li>`).join('');
+
+    el.querySelector('.result-meta').innerHTML = '';
+    el.querySelector('.section-body').innerHTML = `
+      <div class="section-loading">
+        <div class="trace-head">
+          <span class="trace-eyebrow">Pipeline</span>
+          <span class="trace-caption" aria-live="polite">Retrieving sources · synthesizing ${TYPES[type].subject}</span>
+        </div>
+        <ol class="trace-list" aria-label="Data pipeline progress">${rows}</ol>
+      </div>`;
+    startTrace(el);
+  }
+
+  // Advance through the six database stages, then hold the final synthesis
+  // stage as active until the fetch resolves (which replaces the whole body).
+  // No elapsed time or ETA — the trace itself is the affordance.
+  function startTrace(el) {
+    const lis = [...el.querySelectorAll('.trace-stage')];
+    if (!lis.length) return;
+    let cur = 0;
+    renderStage(lis[0], 'active');
+    el._trace = setInterval(() => {
+      if (!document.body.contains(lis[0])) { stopTrace(el); return; }
+      if (cur < lis.length - 1) {
+        renderStage(lis[cur], 'done');
+        cur++;
+        renderStage(lis[cur], 'active');
+      } else {
+        stopTrace(el);   // synthesis stage stays active (spinner) until response
+      }
+    }, 780);
+  }
+
+  function stopTrace(el) {
+    if (el && el._trace) { clearInterval(el._trace); el._trace = null; }
+  }
+
+  function setMeta(el, pills) {
+    el.querySelector('.result-meta').innerHTML =
+      pills.filter(Boolean).map(p => `<span class="meta-pill">${esc(p)}</span>`).join('');
+  }
+
+  function setBody(el, html) {
+    stopTrace(el);
+    el.querySelector('.section-body').innerHTML = html;
+  }
+
+  function setError(el, title, message) {
+    stopTrace(el);
+    el.querySelector('.result-meta').innerHTML = '';
+    setBody(el, `
+      <div class="section-error">
+        <span class="error-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 4l8.5 15.2H3.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M12 10.2v4.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M12 17.4v.05" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <div>
+          <div class="error-title">${esc(title)}</div>
+          <div class="section-error-msg">${esc(message)}</div>
+        </div>
+      </div>`);
+  }
+
+  // Each rendered section offers the OTHER views that aren't on screen yet, so a
+  // user who started with one can add the others without re-typing.
+  function refreshFooters() {
+    const present = new Set(Object.keys(sectionEls));
+    for (const [type, el] of Object.entries(sectionEls)) {
+      const footer = el.querySelector('.section-footer');
+      const others = Object.keys(TYPES).filter(t => t !== type && !present.has(t));
+      if (!others.length) {
+        footer.innerHTML = '';
+        continue;
+      }
+      footer.innerHTML =
+        `<span class="footer-add-label">Add</span>` +
+        others.map(t => `<button class="add-btn" onclick="requestSection('${t}')">+ ${TYPES[t].label}</button>`).join('');
+    }
+  }
+
+  function setBusy(type, busy) {
+    const b = document.getElementById(`btn-${type}`);
+    if (b) b.disabled = busy;
+    // Add-buttons pointing at this type live in other sections' footers.
+    document.querySelectorAll(`.add-btn`).forEach(btn => {
+      if (btn.getAttribute('onclick') === `requestSection('${type}')`) btn.disabled = busy;
+    });
+  }
+
+  // ─── Fetch + render per type ──────────────────────────────────────────────
+
+  async function runSection(type, name) {
+    const el = sectionEls[type];
+    setLoading(el, type);
+    setBusy(type, true);
+    try {
+      if (type === 'brief')       await runBrief(el, name);
+      else if (type === 'hypotheses') await runHypotheses(el, name);
+      else if (type === 'patterns')   await runPatterns(el, name);
+    } catch (err) {
+      setError(el, 'Connection error',
+        `Could not reach the API at ${API_BASE}. Make sure the server is running:\n\nuvicorn api.main:app --port 8000`);
+    } finally {
+      setBusy(type, false);
+    }
+  }
+
+  // Map a non-OK response to a friendly (title, message) pair.
+  async function readError(res, name) {
+    let detail = `HTTP ${res.status}`;
+    try { const d = await res.json(); detail = d.detail || detail; } catch {}
+    if (res.status === 404)  return ['Disease not found', `"${name}" is not in the knowledge graph. Use the autocomplete dropdown to pick an available disease, or check the spelling.`];
+    if (res.status === 429)  return ['Rate limit reached', 'The API allows 10 requests per minute. Please wait a moment and try again.'];
+    if (res.status === 500)  return ['Server error', detail];
+    return [`Error ${res.status}`, detail];
+  }
+
+  async function runBrief(el, name) {
+    // If the request runs long (>3s) it's almost certainly a brand-new disease
+    // being ingested on demand — note it in the pipeline caption.
+    const slowTimer = setTimeout(() => {
+      const cap = el.querySelector('.trace-caption');
+      if (cap) cap.textContent = 'New disease — ingesting across sources, then synthesizing';
+    }, 3000);
+
+    let res;
+    try {
+      res = await fetch(`${API_BASE}/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ disease: name }),
+      });
+    } finally {
+      clearTimeout(slowTimer);
+    }
+    if (!res.ok) { const [t, m] = await readError(res, name); setError(el, t, m); return; }
+    const data = await res.json();
+    setBody(el, `<div class="brief-card">${md(data.brief)}</div>`);
+    const when = new Date(data.timestamp).toLocaleString(undefined, {
+      month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+    // A brand-new (just-ingested) disease gets a badge next to its name.
+    const badge = data.status === 'ingested_and_generated'
+      ? '<span class="new-badge" title="Ingested on demand just now">Newly added to BioIQ</span>'
+      : '';
+    const metaEl = el.querySelector('.result-meta');
+    metaEl.innerHTML =
+      `<span class="meta-pill">${esc(data.disease)}</span>` + badge +
+      (when ? `<span class="meta-pill">${esc(when)}</span>` : '');
+  }
+
+  async function runHypotheses(el, name) {
+    // Long request (>3s) → likely a brand-new disease being ingested on demand.
+    const slowTimer = setTimeout(() => {
+      const cap = el.querySelector('.trace-caption');
+      if (cap) cap.textContent = 'New disease — ingesting across sources, then generating hypotheses';
+    }, 3000);
+
+    let res;
+    try {
+      res = await fetch(`${API_BASE}/hypotheses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ disease: name }),
+      });
+    } finally {
+      clearTimeout(slowTimer);
+    }
+    if (!res.ok) { const [t, m] = await readError(res, name); setError(el, t, m); return; }
+    const data = await res.json();
+    setBody(el, `<div class="brief-card">${md(hypothesesToMarkdown(data))}</div>`);
+    // A brand-new (just-ingested) disease gets a badge next to its name.
+    const badge = data.status === 'ingested_and_generated'
+      ? '<span class="new-badge" title="Ingested on demand just now">Newly added to BioIQ</span>'
+      : '';
+    const pills = [
+      data.disease_name || name,
+      `${(data.therapeutic_hypotheses || []).length} hypotheses`,
+      data.cost_usd != null ? `$${Number(data.cost_usd).toFixed(3)}` : null,
+    ].filter(Boolean).map(p => `<span class="meta-pill">${esc(p)}</span>`);
+    const metaEl = el.querySelector('.result-meta');
+    metaEl.innerHTML = pills.length ? pills[0] + badge + pills.slice(1).join('') : badge;
+  }
+
+  async function runPatterns(el, name) {
+    const res = await fetch(`${API_BASE}/patterns/${encodeURIComponent(name)}`);
+    if (!res.ok) { const [t, m] = await readError(res, name); setError(el, t, m); return; }
+    const data = await res.json();
+    const count = (data.drug_overlaps || []).length + (data.mechanism_themes || []).length;
+    setBody(el, `<div class="brief-card">${md(patternsToMarkdown(data, name))}</div>`);
+    setMeta(el, [data.disease || name, count ? `${count} connection${count === 1 ? '' : 's'}` : 'no connections yet']);
+  }
+
+  // ─── Structured-JSON → Markdown builders ──────────────────────────────────
+
+  function hypothesesToMarkdown(d) {
+    let s = '';
+
+    s += `## Therapeutic Hypotheses\n\n`;
+    (d.therapeutic_hypotheses || []).forEach(h => {
+      s += `### ${h.rank}. ${h.name}\n\n`;
+      s += `${h.hypothesis_statement}\n\n`;
+      if (h.mechanistic_rationale) s += `**Mechanistic rationale.** ${h.mechanistic_rationale}\n\n`;
+      s += `**Scores:** feasibility ${h.feasibility_score}/10 · novelty ${h.novelty_score}/10 · commercial ${h.commercial_potential_score}/10 · composite **${h.composite_score}**\n\n`;
+      s += `**Analogous success:** ${h.analogous_disease}\n\n`;
+      if ((h.citations || []).length) {
+        s += `**Reactome citations:** ${h.citations.map(c => `\`${c}\``).join(' ')}\n\n`;
+      }
+    });
+
+    s += `## Drug Repurposing Candidates\n\n`;
+    (d.repurposing_candidates || []).forEach(c => {
+      s += `### ${c.rank}. ${c.drug_name}\n\n`;
+      s += `**Approved for:** ${c.approved_indication}\n\n`;
+      s += `**Mechanistic overlap:** ${c.mechanistic_overlap}\n\n`;
+      s += `**Target subpopulation:** ${c.patient_subpopulation}\n\n`;
+    });
+
+    s += `## Experimental Priorities\n\n`;
+    (d.experimental_priorities || []).forEach(e => {
+      s += `### Experiment ${e.rank}\n\n`;
+      s += `${e.experiment_description}\n\n`;
+      s += `**Rationale:** ${e.rationale}\n\n`;
+      s += `**Expected information value:** ${e.expected_information_value}\n\n`;
+    });
+
+    const r = d.regulatory_pathway;
+    if (r) {
+      s += `## Regulatory Pathway\n\n`;
+      if ((r.fda_designations || []).length) {
+        s += `**FDA designations:** ${r.fda_designations.join(' · ')}\n\n`;
+      }
+      if (r.rationale) s += `${r.rationale}\n\n`;
+      if (r.strategic_implications) s += `**Strategic implications.** ${r.strategic_implications}\n\n`;
+    }
+
+    return s;
+  }
+
+  function patternsToMarkdown(d, name) {
+    const disease = d.disease || name;
+    const drugs   = d.drug_overlaps || [];
+    const themes  = d.mechanism_themes || [];
+
+    if (!drugs.length && !themes.length) {
+      return `No genuine cross-disease connections have surfaced for **${disease}** yet.\n\n`
+        + `This view compares the disease against every other disease in the knowledge base and shows only overlaps our reasoning pass rated as *genuine shared biology* — the same drug hitting the same molecular target, or a real shared sub-mechanism. It gets richer as more diseases are analyzed.`;
+    }
+
+    let s = '';
+
+    if (drugs.length) {
+      s += `## Shared Drug Repurposing\n\n`;
+      s += `Drugs proposed for **${disease}** that are also repurposing candidates in other diseases through the *same molecular target*.\n\n`;
+      drugs.forEach(o => {
+        const others = (o.diseases || []).filter(x => x.toLowerCase() !== disease.toLowerCase());
+        s += `### ${o.drug_name}\n\n`;
+        s += `**Confidence:** \`${o.confidence || '—'}\`\n\n`;
+        s += `**Shared molecular target:** ${o.shared_molecular_target || '—'}\n\n`;
+        s += `**Also relevant to:** ${others.join(', ') || '—'}\n\n`;
+        if (o.reasoning) s += `${o.reasoning}\n\n`;
+      });
+    }
+
+    if (themes.length) {
+      s += `## Shared Mechanism Themes\n\n`;
+      s += `Top-level pathway categories where **${disease}** converges with other diseases on genuine shared biology.\n\n`;
+      themes.forEach(t => {
+        const others = (t.diseases || []).filter(x => x.toLowerCase() !== disease.toLowerCase());
+        s += `### ${t.top_level_category}\n\n`;
+        s += `**Confidence:** \`${t.confidence || '—'}\`\n\n`;
+        s += `**Therapeutic mechanism class:** ${t.therapeutic_mechanism_class || '—'}\n\n`;
+        s += `**Shared with:** ${others.join(', ') || '—'}\n\n`;
+        if (t.reasoning) s += `${t.reasoning}\n\n`;
+      });
+    }
+
+    return s;
+  }
+
+  // ─── Boot ─────────────────────────────────────────────────────────────────
+  loadDiseases();
+</script>
+</body>
+</html>
