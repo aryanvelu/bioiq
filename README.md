@@ -2,9 +2,7 @@
 
 **Rare and chronic disease research intelligence.** Give BioIQ a disease name and it returns a structured, cited research brief: mechanism, genetic basis, pathway disruptions, drug repurposing candidates, active clinical trials, and open research questions.
 
-Existing tools such as DisGeNET, Monarch, and Open Targets return association tables. BioIQ connects several public databases into one knowledge graph, then uses Claude to reason over that graph and write the synthesis in plain language.
-
-> **Research prototype.** Everything comes from public databases, and no patient data is used. Outputs are hypotheses for researchers to check, not medical advice.
+Existing tools such as DisGeNET, Monarch, and Open Targets return association tables. BioIQ connects several public databases into one knowledge graph, then uses the Anthropic API to reason over that graph and write the synthesis in plain language.
 
 ## How it works
 
@@ -82,7 +80,7 @@ To add diseases, add the name and OMIM MIM number to the `DISEASES` list in `scr
 
 ## Status
 
-Working MVP: the full pipeline runs end to end across a seed corpus of rare and chronic diseases. Planned next steps are a PostgreSQL + pgvector backend and broader disease coverage.
+Working MVP: the full pipeline runs end to end across a seed corpus of rare and chronic diseases. Planned next steps are a PostgreSQL + pgvector backend and broader disease coverage. However, any disease can be given to BioIQ and the output will be the research brief (on-demand ingestion) but latency is quite high
 
 ## Tech stack
 
