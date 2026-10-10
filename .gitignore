@@ -4,3 +4,8 @@ data/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Local-only files
+CLAUDE.md
+.claude/
+20*-*.txt
